@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英作文パズル</title>
+
+<style>
+body{
+  font-family: sans-serif;
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+  background:#f6f7fb;
+}
+
+.card{
+  background:white;
+  padding:18px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.05);
+  margin-bottom:14px;
+}
+
+.word, .built{
+  padding:12px 16px;
+  margin:6px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:17px;
+}
+
+.word{ background:#222; color:white; }
+.built{ background:#dfe6ff; }
+
+.correct{ color:#0a7f2e; font-weight:bold; }
+.wrong{ color:#c0392b; font-weight:bold; }
+
+.bigResult{
+  text-align:center;
+  font-size:24px;
+  font-weight:bold;
+  margin:20px 0;
+}
+
+button.ctrl{
+  padding:14px 20px;
+  margin:8px;
+  border:none;
+  border-radius:10px;
+  background:#4a6cf7;
+  color:white;
+  cursor:pointer;
+  font-size:17px;
+}
+
+button.ctrl.gray{
+  background:#777;
+}
+
+.missBox{
+  background:#fff7ed;
+  border-left:6px solid #fb923c;
+  padding:14px;
+  border-radius:10px;
+  margin-top:16px;
+}
+
+@media (max-width:600px){
+  .word, .built{
+    width:100%;
+    font-size:18px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h1>英作文 並べ替えパズル</h1>
+
+<div id="app"></div>
+
+<script>
+
+/********************
+ 大問ごとに区切る！
+********************/
+
+const sections = [
+  {
+    title:"大問1",
+    questions:[
+      {
+        jp:"どこでもドアがあったらいいと思いませんか。",
+        tokens:["an","anywhere","door","if","wouldn't","be","we","had","it","nice"],
+        answer:"wouldn't it be nice if we had an anywhere door?",
+        explain:"仮定法。Wouldn't it be nice if ～ は超頻出。"
+      },
+      {
+        jp:"私にとってこの歌を歌うのはとても難しいです。",
+        tokens:["this","song","for","sing","me","it","very","difficult","to","is"],
+        answer:"it is very difficult for me to sing this song.",
+        explain:"It is + 形容詞 + for + 人 + to 動詞。"
+      },
+      {
+        jp:"大雪にもかかわらず、列車は時間通りに到着しました。",
+        tokens:["the","train","on","the","heavy","snow","arrived","time","spite","of","in"],
+        answer:"the train arrived on time in spite of the heavy snow.",
+        explain:"in spite of = ～にもかかわらず"
+      },
+      {
+        jp:"私たちは今朝早くからパーティーの準備をしています。",
+        tokens:["preparing","this","morning","been","early","from","the","party","for","we've"],
+        answer:"we've been preparing for the party from early this morning.",
+        explain:"現在完了進行形。"
+      },
+      {
+        jp:"毎日30分の運動をすることはあなたの健康によいでしょう。",
+        tokens:["every","day","of","thirty","health","exercise","would","for","good","your","be","minutes"],
+        answer:"thirty minutes of exercise every day would be good for your health.",
+        explain:"minutes of ～ で「～の分」。"
+      }
+    ]
+  }
+];
+
+
+/********************
+ 状態
+********************/
+
+let sectionIndex = 0;
+let questionIndex = 0;
+let built = [];
+let pool = [];
+let score = 0;
+let wrongList = []; // ←間違えた問題保存（神機能）
+
+const app = document.getElementById("app");
+
+
+/********************
+ 描画
+********************/
+
+function shuffle(arr){
+  return [...arr].sort(()=>Math.random()-0.5);
+}
+
+function renderQuestion(){
+  const q = sections[sectionIndex].questions[questionIndex];
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>${sections[sectionIndex].title}（${questionIndex+1}/${sections[sectionIndex].questions.length}）</h2>
+      <p><b>${q.jp}</b></p>
+
+      <h3>あなたの文</h3>
+      <div id="built"></div>
+
+      <h3>単語</h3>
+      <div id="pool"></div>
+
+      <p id="result"></p>
+      <p id="explain"></p>
+    </div>
+  `;
+
+  built = [];
+  pool = shuffle(q.tokens);
+
+  drawWords();
+}
+
+function drawWords(){
+  const builtDiv = document.getElementById("built");
+  const poolDiv = document.getElementById("pool");
+
+  builtDiv.innerHTML = "";
+  poolDiv.innerHTML = "";
+
+  built.forEach((w,i)=>{
+    const btn = document.createElement("button");
+    btn.textContent = w;
+    btn.className = "built";
+    btn.onclick = ()=>{
+      pool.push(w);
+      built.splice(i,1);
+      drawWords();
+    };
+    builtDiv.appendChild(btn);
+  });
+
+  pool.forEach((w,i)=>{
+    const btn = document.createElement("button");
+    btn.textContent = w;
+    btn.className = "word";
+    btn.onclick = ()=>{
+      built.push(w);
+      pool.splice(i,1);
+      drawWords();
+      autoCheck();
+    };
+    poolDiv.appendChild(btn);
+  });
+}
+
+
+/********************
+ 採点（大文字無視）
+********************/
+
+function normalize(s){
+  return s.trim().replace(/\s+/g," ").toLowerCase();
+}
+
+function autoCheck(){
+  const q = sections[sectionIndex].questions[questionIndex];
+
+  if(built.length !== q.tokens.length) return;
+
+  let sentence = built.join(" ");
+
+  if(!sentence.endsWith(".") && !sentence.endsWith("?")){
+    sentence += q.answer.endsWith("?") ? "?" : ".";
+  }
+
+  const result = document.getElementById("result");
+  const explain = document.getElementById("explain");
+
+  if(normalize(sentence) === normalize(q.answer)){
+    result.innerHTML = `<span class="correct">正解！</span>`;
+    score++;
+  }else{
+    result.innerHTML = `<span class="wrong">不正解！</span><br>正解：${q.answer}`;
+
+    wrongList.push({
+      jp:q.jp,
+      correct:q.answer,
+      explain:q.explain
+    });
+  }
+
+  explain.textContent = q.explain;
+
+  setTimeout(nextQuestion,1200);
+}
+
+
+/********************
+ 次の問題
+********************/
+
+function nextQuestion(){
+  questionIndex++;
+
+  if(questionIndex >= sections[sectionIndex].questions.length){
+    showFinal();
+  }else{
+    renderQuestion();
+  }
+}
+
+
+/********************
+ 大問結果表示
+********************/
+
+function showFinal(){
+
+  let missHTML = "";
+
+  if(wrongList.length > 0){
+    missHTML = `
+      <div class="missBox">
+        <h3>復習しよう！間違えた問題</h3>
+        ${wrongList.map(w=>`
+          <p><b>${w.jp}</b><br>
+          正解：${w.correct}<br>
+          解説：${w.explain}</p>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  app.innerHTML = `
+    <div class="card">
+      <div class="bigResult">
+        ${sections[sectionIndex].title} 結果<br><br>
+        ${score} / ${sections[sectionIndex].questions.length} 正解！
+      </div>
+
+      ${missHTML}
+
+      <div style="text-align:center;">
+        <button class="ctrl" onclick="retrySection()">もう一度やる</button>
+        <button class="ctrl gray" onclick="reviewWrong()">間違いだけ復習</button>
+        <button class="ctrl gray" onclick="nextSection()">次の大問へ</button>
+      </div>
+    </div>
+  `;
+}
+
+
+/********************
+ 復習モード（神機能）
+********************/
+
+function reviewWrong(){
+
+  if(wrongList.length === 0){
+    alert("間違いはありません！完璧！");
+    return;
+  }
+
+  sections.splice(sectionIndex+1,0,{
+    title:"復習モード",
+    questions: wrongList.map(w=>({
+      jp:w.jp,
+      tokens: shuffle(w.correct.replace(/[?.]/g,"").split(" ")),
+      answer:w.correct,
+      explain:w.explain
+    }))
+  });
+
+  wrongList = [];
+  score = 0;
+  questionIndex = 0;
+  sectionIndex++;
+
+  renderQuestion();
+}
+
+
+/********************
+ ボタン操作
+********************/
+
+function retrySection(){
+  questionIndex = 0;
+  score = 0;
+  wrongList = [];
+  renderQuestion();
+}
+
+function nextSection(){
+  sectionIndex++;
+
+  if(sectionIndex >= sections.length){
+    app.innerHTML = `
+      <div class="card">
+        <div class="bigResult">🎉 全大問クリア！</div>
+      </div>
+    `;
+    return;
+  }
+
+  questionIndex = 0;
+  score = 0;
+  wrongList = [];
+  renderQuestion();
+}
+
+
+/********************
+ 起動
+********************/
+
+renderQuestion();
+
+</script>
+
+</body>
+</html>
