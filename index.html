@@ -3,180 +3,479 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>英作文パズル</title>
-
+<title>英作文パズル（大問＋ヒント＋編集＋記録）</title>
 <style>
-body{
-  font-family: sans-serif;
-  max-width:900px;
-  margin:auto;
-  padding:20px;
-  background:#f6f7fb;
-}
-
-.card{
-  background:white;
-  padding:18px;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.05);
-  margin-bottom:14px;
-}
-
-.word, .built{
-  padding:12px 16px;
-  margin:6px;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-  font-size:17px;
-}
-
-.word{ background:#222; color:white; }
-.built{ background:#dfe6ff; }
-
-.correct{ color:#0a7f2e; font-weight:bold; }
-.wrong{ color:#c0392b; font-weight:bold; }
-
-.bigResult{
-  text-align:center;
-  font-size:24px;
-  font-weight:bold;
-  margin:20px 0;
-}
-
-button.ctrl{
-  padding:14px 20px;
-  margin:8px;
-  border:none;
-  border-radius:10px;
-  background:#4a6cf7;
-  color:white;
-  cursor:pointer;
-  font-size:17px;
-}
-
-button.ctrl.gray{
-  background:#777;
-}
-
-.missBox{
-  background:#fff7ed;
-  border-left:6px solid #fb923c;
-  padding:14px;
-  border-radius:10px;
-  margin-top:16px;
-}
-
-@media (max-width:600px){
-  .word, .built{
-    width:100%;
-    font-size:18px;
+  :root{
+    --bg:#f6f7fb;
+    --card:#fff;
+    --ink:#111;
+    --muted:#666;
+    --primary:#4a6cf7;
+    --primary2:#10b981;
+    --danger:#ef4444;
+    --warn:#fb923c;
   }
-}
+  body{
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 18px 12px 80px;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    flex-wrap:wrap;
+    margin: 8px 0 12px;
+  }
+  h1{ margin: 6px 0; font-size: 22px; }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .card{
+    background: var(--card);
+    padding: 16px;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.06);
+    margin-bottom: 14px;
+  }
+  .jp{
+    font-size: 20px;
+    font-weight: 900;
+    padding: 12px 14px;
+    border-left: 6px solid var(--primary);
+    background: linear-gradient(90deg,#eef2ff,#ffffff);
+    border-radius: 12px;
+    margin: 6px 0 10px;
+    line-height: 1.55;
+  }
+  .meta{ color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+  .box{
+    border: 2px dashed #cfd3dc;
+    padding: 10px;
+    min-height: 60px;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .word,.built{
+    padding: 12px 16px;
+    margin: 6px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 17px;
+    line-height: 1.2;
+  }
+  .word{ background: #111827; color: #fff; }
+  .built{ background: #dfe6ff; color: #111; }
+  .word:disabled,.built:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .controls{ display:flex; gap:8px; flex-wrap:wrap; margin: 10px 0 6px; }
+  button.ctrl{
+    padding: 12px 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+    font-size: 15px;
+  }
+  button.ctrl.gray{ background:#6b7280; }
+  button.ctrl.green{ background: var(--primary2); }
+  button.ctrl.danger{ background: var(--danger); }
+
+  .result{ white-space: pre-line; font-weight: 900; font-size: 16px; margin: 10px 0 6px; }
+  .correct{ color: #0a7f2e; }
+  .wrong{ color: #c0392b; }
+
+  .panel{
+    margin-top: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    line-height: 1.65;
+  }
+  .explain{ background:#fff; border-left:6px solid var(--primary); }
+  .hint{ background:#ecfdf5; border-left:6px solid var(--primary2); }
+  .log{ background:#fff7ed; border-left:6px solid var(--warn); font-size: 14px; }
+
+  .bigResult{
+    text-align:center;
+    font-size: 22px;
+    font-weight: 900;
+    margin: 8px 0 14px;
+  }
+
+  /* Editor */
+  .editor{ display:none; }
+  .editor h2{ margin: 0 0 10px; font-size: 18px; }
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width:760px){ .grid{ grid-template-columns: 1fr; } }
+  .field label{ display:block; font-size: 12px; color: var(--muted); margin: 2px 0 6px; font-weight: 800; }
+  .field input,.field textarea,.field select{
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #fff;
+  }
+  .field textarea{ min-height: 88px; resize: vertical; }
+  .small{ color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+  /* Modal */
+  .modal-backdrop{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding: 18px;
+    z-index: 9999;
+  }
+  .modal{
+    width: min(760px, 100%);
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 12px 34px rgba(0,0,0,.22);
+  }
+  .modal h2{ margin: 4px 0 10px; font-size: 18px; }
+  .modal .summary{
+    background:#f8fafc;
+    border-radius: 12px;
+    padding: 12px;
+    line-height: 1.7;
+  }
+  .modal .miss{
+    margin-top: 10px;
+    background:#fff7ed;
+    border-left:6px solid var(--warn);
+    border-radius: 12px;
+    padding: 12px;
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  @media (max-width:600px){
+    .word,.built{ width:100%; font-size:18px; }
+    button.ctrl{ width:100%; }
+  }
 </style>
 </head>
-
 <body>
 
-<h1>英作文 並べ替えパズル</h1>
+<div class="topbar">
+  <h1>英作文 並べ替えパズル</h1>
+  <div class="row">
+    <button class="ctrl gray" id="btnEditor" onclick="toggleEditor()">編集モード</button>
+    <button class="ctrl gray" onclick="clearHistory()">履歴リセット</button>
+  </div>
+</div>
 
 <div id="app"></div>
 
+<!-- 大問結果モーダル -->
+<div id="groupModal" class="modal-backdrop" onclick="backdropClose(event)">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2 id="groupModalTitle">大問の結果</h2>
+    <div id="groupModalBody" class="summary"></div>
+    <div id="groupModalMiss" class="miss" style="display:none;"></div>
+    <div class="row" style="margin-top:12px;">
+      <button class="ctrl green" onclick="goNextSection()">次の大問へ</button>
+      <button class="ctrl gray" onclick="retrySection()">この大問をもう一回</button>
+      <button class="ctrl gray" onclick="closeGroupModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <script>
+/********************
+  保存キー
+********************/
+const LS_SECTIONS_KEY = "english_puzzle_sections_v4";
+const COOKIE_HISTORY_KEY = "englishPuzzleHistory_v4";
 
 /********************
- 大問ごとに区切る！
+  デフォルト問題（必要なら編集モードで増やす）
+  ※ここは最小セット。あなたの全問題は編集モードで追加できます。
 ********************/
-
-const sections = [
+const DEFAULT_SECTIONS = [
   {
     title:"大問1",
     questions:[
       {
+        id:"q1-1",
         jp:"どこでもドアがあったらいいと思いませんか。",
         tokens:["an","anywhere","door","if","wouldn't","be","we","had","it","nice"],
         answer:"wouldn't it be nice if we had an anywhere door?",
+        hint:"出だしは Wouldn't it be nice if...（仮定法）",
         explain:"仮定法。Wouldn't it be nice if ～ は超頻出。"
       },
       {
+        id:"q1-2",
         jp:"私にとってこの歌を歌うのはとても難しいです。",
         tokens:["this","song","for","sing","me","it","very","difficult","to","is"],
         answer:"it is very difficult for me to sing this song.",
+        hint:"It is + 形容詞 + for + 人 + to + 動詞",
         explain:"It is + 形容詞 + for + 人 + to 動詞。"
       },
       {
+        id:"q1-3",
         jp:"大雪にもかかわらず、列車は時間通りに到着しました。",
         tokens:["the","train","on","the","heavy","snow","arrived","time","spite","of","in"],
         answer:"the train arrived on time in spite of the heavy snow.",
+        hint:"in spite of + 名詞 / on time",
         explain:"in spite of = ～にもかかわらず"
       },
       {
+        id:"q1-4",
         jp:"私たちは今朝早くからパーティーの準備をしています。",
         tokens:["preparing","this","morning","been","early","from","the","party","for","we've"],
         answer:"we've been preparing for the party from early this morning.",
+        hint:"have been + -ing（ずっと〜している）",
         explain:"現在完了進行形。"
       },
       {
+        id:"q1-5",
         jp:"毎日30分の運動をすることはあなたの健康によいでしょう。",
         tokens:["every","day","of","thirty","health","exercise","would","for","good","your","be","minutes"],
         answer:"thirty minutes of exercise every day would be good for your health.",
+        hint:"主語は Thirty minutes of exercise",
         explain:"minutes of ～ で「～の分」。"
       }
     ]
   }
 ];
 
+/********************
+  ユーティリティ
+********************/
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
+function escapeHtml(s){
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#39;');
+}
+function normalize(s){
+  return String(s).trim().replace(/\s+/g," ").toLowerCase();
+}
+function ensureIds(sections){
+  // id が無い問題に自動付与（保存前提）
+  for(const sec of sections){
+    for(const q of sec.questions){
+      if(!q.id){
+        q.id = "q-" + Math.random().toString(36).slice(2,9) + "-" + Date.now().toString(36);
+      }
+    }
+  }
+  return sections;
+}
 
 /********************
- 状態
+  永続化（sections: localStorage / history: cookie）
 ********************/
+function loadSections(){
+  const raw = localStorage.getItem(LS_SECTIONS_KEY);
+  if(!raw) return ensureIds(structuredClone(DEFAULT_SECTIONS));
+  try{
+    const v = JSON.parse(raw);
+    if(Array.isArray(v) && v.length) return ensureIds(v);
+    return ensureIds(structuredClone(DEFAULT_SECTIONS));
+  }catch{
+    return ensureIds(structuredClone(DEFAULT_SECTIONS));
+  }
+}
+function saveSections(){
+  localStorage.setItem(LS_SECTIONS_KEY, JSON.stringify(sections));
+}
+
+function setCookie(name, value, days=365){
+  const d = new Date();
+  d.setTime(d.getTime() + (days*24*60*60*1000));
+  document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value))
+    + ";expires=" + d.toUTCString() + ";path=/";
+}
+function getCookie(name){
+  const cookies = document.cookie.split("; ");
+  for(const c of cookies){
+    const parts = c.split("=");
+    const k = parts[0];
+    const v = parts.slice(1).join("=");
+    if(k === name){
+      try{ return JSON.parse(decodeURIComponent(v)); }catch{ return null; }
+    }
+  }
+  return null;
+}
+
+let historyData = getCookie(COOKIE_HISTORY_KEY) || {}; // key: question.id
+function saveHistory(){ setCookie(COOKIE_HISTORY_KEY, historyData); }
+
+function clearHistory(){
+  if(!confirm("履歴（正解/不正解）をリセットします。OK？")) return;
+  historyData = {};
+  saveHistory();
+  render();
+  alert("履歴をリセットしました。");
+}
+
+/********************
+  状態
+********************/
+const app = document.getElementById("app");
+let sections = loadSections();
 
 let sectionIndex = 0;
 let questionIndex = 0;
 let built = [];
 let pool = [];
+let locked = false;
+let hintOpen = false;
+
+// 大問の今回スコア（周回）
 let score = 0;
-let wrongList = []; // ←間違えた問題保存（神機能）
+let wrongList = []; // {jp, correct, explain, yours}
+let answeredSet = new Set(); // question.id（周回内の二重カウント防止）
 
-const app = document.getElementById("app");
-
+// 編集モード
+let editorOpen = false;
 
 /********************
- 描画
+  大問アクセス
 ********************/
+function currentSection(){ return sections[sectionIndex]; }
+function currentQuestion(){ return currentSection().questions[questionIndex]; }
+function totalSections(){ return sections.length; }
 
-function shuffle(arr){
-  return [...arr].sort(()=>Math.random()-0.5);
+/********************
+  履歴（個別）
+********************/
+function getHist(qid){ return historyData[qid] || null; }
+function updateHist(qid, correct, yourAnswer, correctAnswer){
+  const prev = historyData[qid] || {tries:0, correctCount:0, wrongCount:0, mistakes:[], commonMistake:null, diffs:{order:0,end:0}};
+  prev.tries += 1;
+  if(correct){ prev.correctCount += 1; prev.lastMistake = null; }
+  else{ prev.wrongCount += 1; prev.lastMistake = yourAnswer; }
+  prev.lastAnswer = yourAnswer;
+
+  // 簡易ミス判定：語順／文末記号（大文字は判定しない）
+  if(!correct){
+    const u = normalize(yourAnswer);
+    const a = normalize(correctAnswer);
+    const uEnd = u.slice(-1);
+    const aEnd = a.slice(-1);
+    if(uEnd !== aEnd) prev.diffs.end += 1;
+
+    const uw = u.replace(/[?.!]$/,'').split(/\s+/);
+    const aw = a.replace(/[?.!]$/,'').split(/\s+/);
+    if(uw.join('|') !== aw.join('|')) prev.diffs.order += 1;
+
+    // mistakes list (max 5 unique)
+    const next = [yourAnswer, ...(prev.mistakes||[])];
+    const uniq = [];
+    const seen = new Set();
+    for(const m of next){
+      if(!m) continue;
+      if(!seen.has(m)){
+        uniq.push(m);
+        seen.add(m);
+      }
+      if(uniq.length >= 5) break;
+    }
+    prev.mistakes = uniq;
+
+    const entries = [["語順", prev.diffs.order],["文末の記号", prev.diffs.end]];
+    entries.sort((x,y)=>y[1]-x[1]);
+    prev.commonMistake = entries[0][1] > 0 ? entries[0][0] : null;
+  }
+
+  historyData[qid] = prev;
+  saveHistory();
 }
 
-function renderQuestion(){
-  const q = sections[sectionIndex].questions[questionIndex];
+/********************
+  表示
+********************/
+function render(){
+  if(editorOpen){
+    renderEditor();
+  }else{
+    renderPlay();
+  }
+}
+
+function renderPlay(){
+  const sec = currentSection();
+  const q = currentQuestion();
+  const hist = getHist(q.id);
+
+  const sNo = sectionIndex + 1;
+  const qNo = questionIndex + 1;
+  const qTotal = sec.questions.length;
+
+  const histHtml = hist ? `
+    <div class="meta">
+      📊 記録：<b>${hist.correctCount||0}勝 / ${hist.wrongCount||0}敗</b>（挑戦 ${hist.tries||0}回）
+      ${hist.lastAnswer ? `<br>📝 前回の解答： <i>${escapeHtml(hist.lastAnswer)}</i>` : ""}
+      ${hist.lastMistake ? `<br>⚠️ 前回のミス： <i>${escapeHtml(hist.lastMistake)}</i>` : ""}
+      ${hist.commonMistake ? `<br>📌 よくあるミス： <b>${escapeHtml(hist.commonMistake)}</b>` : ""}
+    </div>
+  ` : `<div class="meta">📊 この問題はまだ解いていません</div>`;
 
   app.innerHTML = `
     <div class="card">
-      <h2>${sections[sectionIndex].title}（${questionIndex+1}/${sections[sectionIndex].questions.length}）</h2>
-      <p><b>${q.jp}</b></p>
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div>
+          <div class="meta"><b>${escapeHtml(sec.title)}</b>（大問 ${sNo}/${totalSections()}）</div>
+          <div class="meta">問題 ${qNo}/${qTotal}</div>
+        </div>
+        <div class="row">
+          <button class="ctrl gray" onclick="prevQuestion()">戻る</button>
+          <button class="ctrl gray" onclick="resetQuestion()">リセット</button>
+          <button class="ctrl green" onclick="toggleHint()">ヒント</button>
+          <button class="ctrl" onclick="nextQuestionManual()">次へ</button>
+        </div>
+      </div>
 
-      <h3>あなたの文</h3>
-      <div id="built"></div>
+      <div class="jp">${escapeHtml(q.jp)}</div>
+      ${histHtml}
 
-      <h3>単語</h3>
-      <div id="pool"></div>
+      <div style="margin-top:10px;">
+        <div class="meta" style="margin:8px 0 6px;"><b>あなたの文（クリックで戻す）</b></div>
+        <div id="built" class="box"></div>
 
-      <p id="result"></p>
-      <p id="explain"></p>
+        <div class="meta" style="margin:12px 0 6px;"><b>単語（クリックで上に入る）</b></div>
+        <div id="pool" class="box"></div>
+
+        <div id="result" class="result"></div>
+        <div id="hintPanel" class="panel hint" style="display:none;"></div>
+        <div id="explainPanel" class="panel explain" style="display:none;"></div>
+        <div id="logPanel" class="panel log" style="display:none;"></div>
+      </div>
     </div>
   `;
 
-  built = [];
-  pool = shuffle(q.tokens);
+  // 初期配置
+  if(pool.length === 0 && built.length === 0){
+    pool = shuffle(q.tokens || []);
+  }
 
   drawWords();
+  renderHintPanel();
 }
 
 function drawWords(){
   const builtDiv = document.getElementById("built");
   const poolDiv = document.getElementById("pool");
+  if(!builtDiv || !poolDiv) return;
 
   builtDiv.innerHTML = "";
   poolDiv.innerHTML = "";
@@ -185,10 +484,13 @@ function drawWords(){
     const btn = document.createElement("button");
     btn.textContent = w;
     btn.className = "built";
+    btn.disabled = locked;
     btn.onclick = ()=>{
       pool.push(w);
       built.splice(i,1);
       drawWords();
+      // 組み立て途中は結果を隠す
+      hidePanelsWhenEditing();
     };
     builtDiv.appendChild(btn);
   });
@@ -197,6 +499,7 @@ function drawWords(){
     const btn = document.createElement("button");
     btn.textContent = w;
     btn.className = "word";
+    btn.disabled = locked;
     btn.onclick = ()=>{
       built.push(w);
       pool.splice(i,1);
@@ -207,170 +510,451 @@ function drawWords(){
   });
 }
 
+function hidePanelsWhenEditing(){
+  const result = document.getElementById("result");
+  const explain = document.getElementById("explainPanel");
+  const log = document.getElementById("logPanel");
+  if(result) result.textContent = "";
+  if(explain) explain.style.display = "none";
+  if(log) log.style.display = "none";
+}
 
 /********************
- 採点（大文字無視）
+  ヒント
 ********************/
+function toggleHint(){
+  hintOpen = !hintOpen;
+  renderHintPanel();
+}
 
-function normalize(s){
-  return s.trim().replace(/\s+/g," ").toLowerCase();
+function renderHintPanel(){
+  const panel = document.getElementById("hintPanel");
+  if(!panel) return;
+
+  if(!hintOpen){
+    panel.style.display = "none";
+    panel.innerHTML = "";
+    return;
+  }
+
+  const q = currentQuestion();
+  const hist = getHist(q.id);
+  let extra = "";
+  if(hist){
+    if(hist.commonMistake){ extra += `<br>📌 よくあるミス：<b>${escapeHtml(hist.commonMistake)}</b>`; }
+    if(Array.isArray(hist.mistakes) && hist.mistakes.length){
+      extra += `<br><b>最近のミス（最大5）</b><br><ol style="margin:6px 0 0 18px; padding:0;">`;
+      extra += hist.mistakes.map(m=>`<li style="margin:4px 0;">${escapeHtml(m)}</li>`).join("");
+      extra += `</ol>`;
+    }
+  }
+
+  panel.style.display = "block";
+  panel.innerHTML = `<b>ヒント</b><br>${escapeHtml(q.hint || "（ヒント未設定）")}${extra}`;
+}
+
+/********************
+  採点（強制採点）
+********************/
+function makeSentence(){
+  const q = currentQuestion();
+  let sentence = built.join(" ").trim();
+  if(!sentence) return "";
+  if(!sentence.endsWith(".") && !sentence.endsWith("?")){
+    sentence += (String(q.answer||"").trim().endsWith("?")) ? "?" : ".";
+  }
+  return sentence;
 }
 
 function autoCheck(){
-  const q = sections[sectionIndex].questions[questionIndex];
+  const q = currentQuestion();
+  if(built.length !== (q.tokens||[]).length) return;
 
-  if(built.length !== q.tokens.length) return;
+  locked = true;
 
-  let sentence = built.join(" ");
+  const sentence = makeSentence();
+  const correct = (normalize(sentence) === normalize(q.answer||""));
 
-  if(!sentence.endsWith(".") && !sentence.endsWith("?")){
-    sentence += q.answer.endsWith("?") ? "?" : ".";
+  // 大問の今回成績
+  if(!answeredSet.has(q.id)){
+    answeredSet.add(q.id);
+    if(correct){
+      score += 1;
+    }else{
+      wrongList.push({ jp:q.jp, correct:q.answer, explain:q.explain, yours: sentence });
+    }
   }
 
+  // 履歴更新
+  updateHist(q.id, correct, sentence, q.answer||"");
+
+  // 表示
   const result = document.getElementById("result");
-  const explain = document.getElementById("explain");
+  const explain = document.getElementById("explainPanel");
+  const log = document.getElementById("logPanel");
 
-  if(normalize(sentence) === normalize(q.answer)){
-    result.innerHTML = `<span class="correct">正解！</span>`;
-    score++;
+  if(correct){
+    result.className = "result correct";
+    result.textContent = "正解！！🎉";
+    if(log){ log.style.display = "none"; log.innerHTML = ""; }
   }else{
-    result.innerHTML = `<span class="wrong">不正解！</span><br>正解：${q.answer}`;
-
-    wrongList.push({
-      jp:q.jp,
-      correct:q.answer,
-      explain:q.explain
-    });
+    result.className = "result wrong";
+    result.textContent = `不正解！\n正解： ${currentQuestion().answer}`;
+    if(log){
+      log.style.display = "block";
+      const hist = getHist(q.id);
+      log.innerHTML = `
+        <b>あなたの解答</b><br>${escapeHtml(sentence)}
+        ${hist && hist.commonMistake ? `<br><br>📌 ミス傾向：<b>${escapeHtml(hist.commonMistake)}</b>` : ""}
+      `;
+    }
   }
 
-  explain.textContent = q.explain;
-
-  setTimeout(nextQuestion,1200);
-}
-
-
-/********************
- 次の問題
-********************/
-
-function nextQuestion(){
-  questionIndex++;
-
-  if(questionIndex >= sections[sectionIndex].questions.length){
-    showFinal();
-  }else{
-    renderQuestion();
-  }
-}
-
-
-/********************
- 大問結果表示
-********************/
-
-function showFinal(){
-
-  let missHTML = "";
-
-  if(wrongList.length > 0){
-    missHTML = `
-      <div class="missBox">
-        <h3>復習しよう！間違えた問題</h3>
-        ${wrongList.map(w=>`
-          <p><b>${w.jp}</b><br>
-          正解：${w.correct}<br>
-          解説：${w.explain}</p>
-        `).join("")}
-      </div>
-    `;
+  if(explain){
+    explain.style.display = "block";
+    explain.innerHTML = `<b>解説</b><br>${q.explain ? q.explain : "（解説未設定）"}`;
   }
 
-  app.innerHTML = `
-    <div class="card">
-      <div class="bigResult">
-        ${sections[sectionIndex].title} 結果<br><br>
-        ${score} / ${sections[sectionIndex].questions.length} 正解！
-      </div>
-
-      ${missHTML}
-
-      <div style="text-align:center;">
-        <button class="ctrl" onclick="retrySection()">もう一度やる</button>
-        <button class="ctrl gray" onclick="reviewWrong()">間違いだけ復習</button>
-        <button class="ctrl gray" onclick="nextSection()">次の大問へ</button>
-      </div>
-    </div>
-  `;
+  // ちょい待って次へ（大問末尾なら結果）
+  setTimeout(()=>{
+    if(questionIndex + 1 >= currentSection().questions.length){
+      showGroupModal();
+    }else{
+      questionIndex += 1;
+      resetQuestion();
+    }
+  }, 900);
 }
 
+function resetQuestion(){
+  const q = currentQuestion();
+  built = [];
+  pool = shuffle(q.tokens || []);
+  locked = false;
+  hintOpen = false;
+  render();
+}
 
 /********************
- 復習モード（神機能）
+  手動移動
 ********************/
-
-function reviewWrong(){
-
-  if(wrongList.length === 0){
-    alert("間違いはありません！完璧！");
+function nextQuestionManual(){
+  // まだ採点前でも移動できる（学習上は便利）
+  if(questionIndex + 1 >= currentSection().questions.length){
+    showGroupModal();
     return;
   }
-
-  sections.splice(sectionIndex+1,0,{
-    title:"復習モード",
-    questions: wrongList.map(w=>({
-      jp:w.jp,
-      tokens: shuffle(w.correct.replace(/[?.]/g,"").split(" ")),
-      answer:w.correct,
-      explain:w.explain
-    }))
-  });
-
-  wrongList = [];
-  score = 0;
-  questionIndex = 0;
-  sectionIndex++;
-
-  renderQuestion();
+  questionIndex += 1;
+  resetQuestion();
 }
 
+function prevQuestion(){
+  if(questionIndex <= 0) return;
+  questionIndex -= 1;
+  resetQuestion();
+}
 
 /********************
- ボタン操作
+  大問結果モーダル
 ********************/
-
-function retrySection(){
-  questionIndex = 0;
-  score = 0;
-  wrongList = [];
-  renderQuestion();
+function backdropClose(e){
+  if(e.target && e.target.id === "groupModal") closeGroupModal();
 }
 
-function nextSection(){
-  sectionIndex++;
+function showGroupModal(){
+  const sec = currentSection();
+  const total = sec.questions.length;
+  const correct = score;
+  const wrong = total - correct;
+  const rate = Math.round((correct/total)*100);
 
-  if(sectionIndex >= sections.length){
+  const title = document.getElementById("groupModalTitle");
+  const body = document.getElementById("groupModalBody");
+  const miss = document.getElementById("groupModalMiss");
+
+  title.textContent = `${sec.title} の結果`;
+  body.innerHTML = `
+    <b>今回の結果</b><br>
+    正解：<b>${correct}</b> / ${total}<br>
+    不正解：<b>${wrong}</b><br>
+    正答率：<b>${rate}%</b><br>
+    <div style="margin-top:8px; color:#6b7280; font-size:12px;">※この結果は「この周回の大問」だけのスコアです（履歴は別で保存）。</div>
+  `;
+
+  if(wrongList.length){
+    miss.style.display = "block";
+    miss.innerHTML = `<b>間違えた問題（復習用）</b><br><ol style="margin:6px 0 0 18px; padding:0;">` +
+      wrongList.map(x=>`
+        <li style="margin:10px 0;">
+          ${escapeHtml(x.jp)}<br>
+          正解：<b>${escapeHtml(x.correct)}</b><br>
+          あなた：${escapeHtml(x.yours)}
+        </li>
+      `).join("") + `</ol>`;
+  }else{
+    miss.style.display = "none";
+    miss.innerHTML = "";
+  }
+
+  document.getElementById("groupModal").style.display = "flex";
+}
+
+function closeGroupModal(){
+  document.getElementById("groupModal").style.display = "none";
+}
+
+function retrySection(){
+  // 大問を最初から（周回スコアをリセット）
+  score = 0;
+  wrongList = [];
+  answeredSet = new Set();
+  questionIndex = 0;
+  closeGroupModal();
+  resetQuestion();
+}
+
+function goNextSection(){
+  if(sectionIndex + 1 >= sections.length){
+    closeGroupModal();
     app.innerHTML = `
       <div class="card">
         <div class="bigResult">🎉 全大問クリア！</div>
+        <div class="meta" style="text-align:center;">編集モードで大問を増やせます。</div>
+        <div class="controls" style="justify-content:center; margin-top:12px;">
+          <button class="ctrl gray" onclick="retrySection()">最後の大問をもう一回</button>
+          <button class="ctrl" onclick="toggleEditor()">編集モードへ</button>
+        </div>
       </div>
     `;
     return;
   }
 
+  sectionIndex += 1;
+  score = 0;
+  wrongList = [];
+  answeredSet = new Set();
+  questionIndex = 0;
+  closeGroupModal();
+  resetQuestion();
+}
+
+/********************
+  編集モード
+********************/
+function toggleEditor(){
+  editorOpen = !editorOpen;
+  document.getElementById("btnEditor").textContent = editorOpen ? "プレイに戻る" : "編集モード";
+  render();
+}
+
+function renderEditor(){
+  const sec = currentSection();
+  const q = currentQuestion();
+
+  app.innerHTML = `
+    <div class="card editor" style="display:block;">
+      <h2>編集モード</h2>
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div class="field" style="min-width:260px; flex:1;">
+          <label>大問</label>
+          <select id="edSection" onchange="onChangeSection(this.value)"></select>
+          <div class="small">※編集内容はこの端末に保存（localStorage）</div>
+        </div>
+        <div class="row">
+          <button class="ctrl" onclick="addSection()">＋大問追加</button>
+          <button class="ctrl danger" onclick="deleteSection()">大問削除</button>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:10px;">
+        <div class="field">
+          <label>大問タイトル</label>
+          <input id="edSectionTitle" value="${escapeHtml(sec.title)}" />
+        </div>
+        <div class="field">
+          <label>問題</label>
+          <select id="edQuestion" onchange="onChangeQuestion(this.value)"></select>
+          <div class="row" style="margin-top:8px;">
+            <button class="ctrl" onclick="addQuestion()">＋問題追加</button>
+            <button class="ctrl danger" onclick="deleteQuestion()">問題削除</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>日本語（問題文）</label>
+          <textarea id="edJp">${escapeHtml(q.jp||"")}</textarea>
+        </div>
+        <div class="field">
+          <label>正解英文（answer）</label>
+          <textarea id="edAnswer">${escapeHtml(q.answer||"")}</textarea>
+          <div class="small">採点は大文字小文字を無視します。</div>
+        </div>
+
+        <div class="field">
+          <label>単語タイル（tokens）</label>
+          <textarea id="edTokens" placeholder="1行に1トークン">${escapeHtml((q.tokens||[]).join("\n"))}</textarea>
+          <div class="small">例：this summer みたいにスペース入りトークンOK</div>
+        </div>
+        <div class="field">
+          <label>ヒント（hint）</label>
+          <textarea id="edHint">${escapeHtml(q.hint||"")}</textarea>
+        </div>
+
+        <div class="field" style="grid-column: 1 / -1;">
+          <label>解説（explain）</label>
+          <textarea id="edExplain">${escapeHtml(q.explain||"")}</textarea>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button class="ctrl green" onclick="saveEdits()">保存</button>
+        <button class="ctrl gray" onclick="resetDataToDefault()">初期化（元に戻す）</button>
+      </div>
+    </div>
+  `;
+
+  // populate selects
+  const secSel = document.getElementById("edSection");
+  secSel.innerHTML = "";
+  sections.forEach((s,i)=>{
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = `${i+1}. ${s.title}`;
+    secSel.appendChild(opt);
+  });
+  secSel.value = String(sectionIndex);
+
+  const qSel = document.getElementById("edQuestion");
+  qSel.innerHTML = "";
+  currentSection().questions.forEach((qq,i)=>{
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    const label = (qq.jp||"").slice(0,22);
+    opt.textContent = `${i+1}. ${label}${(qq.jp||"").length>22?"…":""}`;
+    qSel.appendChild(opt);
+  });
+  qSel.value = String(questionIndex);
+}
+
+function onChangeSection(v){
+  sectionIndex = Number(v);
+  questionIndex = 0;
+  render();
+}
+
+function onChangeQuestion(v){
+  questionIndex = Number(v);
+  render();
+}
+
+function saveEdits(){
+  const secTitle = document.getElementById("edSectionTitle").value.trim();
+  const jp = document.getElementById("edJp").value.trim();
+  const ans = document.getElementById("edAnswer").value.trim();
+  const toks = document.getElementById("edTokens").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  const hint = document.getElementById("edHint").value.trim();
+  const exp = document.getElementById("edExplain").value.trim();
+
+  if(!secTitle){ alert("大問タイトルは必須です"); return; }
+  if(!jp || !ans || toks.length === 0){
+    alert("日本語 / 正解英文 / tokens は必須です");
+    return;
+  }
+
+  const sec = currentSection();
+  sec.title = secTitle;
+
+  const q = currentQuestion();
+  q.jp = jp;
+  q.answer = ans;
+  q.tokens = toks;
+  q.hint = hint;
+  q.explain = exp;
+  if(!q.id) q.id = "q-" + Math.random().toString(36).slice(2,9);
+
+  saveSections();
+  alert("保存しました");
+  render();
+}
+
+function addSection(){
+  const n = sections.length + 1;
+  sections.push({
+    title:`大問${n}`,
+    questions:[{
+      id:"q-"+Math.random().toString(36).slice(2,9),
+      jp:"（ここに日本語）",
+      tokens:["(token1)","(token2)"],
+      answer:"(answer).",
+      hint:"（ヒント）",
+      explain:"（解説）",
+    }]
+  });
+  saveSections();
+  sectionIndex = sections.length - 1;
+  questionIndex = 0;
+  render();
+}
+
+function deleteSection(){
+  if(sections.length <= 1){ alert("最後の大問は削除できません"); return; }
+  if(!confirm("この大問を削除します。OK？")) return;
+  sections.splice(sectionIndex, 1);
+  saveSections();
+  sectionIndex = Math.min(sectionIndex, sections.length - 1);
+  questionIndex = 0;
+  render();
+}
+
+function addQuestion(){
+  const sec = currentSection();
+  sec.questions.push({
+    id:"q-"+Math.random().toString(36).slice(2,9),
+    jp:"（ここに日本語）",
+    tokens:["(token1)","(token2)"],
+    answer:"(answer).",
+    hint:"（ヒント）",
+    explain:"（解説）",
+  });
+  saveSections();
+  questionIndex = sec.questions.length - 1;
+  render();
+}
+
+function deleteQuestion(){
+  const sec = currentSection();
+  if(sec.questions.length <= 1){ alert("最後の1問は削除できません"); return; }
+  if(!confirm("この問題を削除します。OK？")) return;
+  const q = currentQuestion();
+  // 履歴も消したい場合：delete historyData[q.id]
+  sec.questions.splice(questionIndex, 1);
+  saveSections();
+  questionIndex = Math.min(questionIndex, sec.questions.length - 1);
+  render();
+}
+
+function resetDataToDefault(){
+  if(!confirm("問題を初期状態に戻します（編集内容は消えます）。OK？")) return;
+  localStorage.removeItem(LS_SECTIONS_KEY);
+  sections = loadSections();
+  sectionIndex = 0;
   questionIndex = 0;
   score = 0;
   wrongList = [];
-  renderQuestion();
+  answeredSet = new Set();
+  built = [];
+  pool = [];
+  locked = false;
+  hintOpen = false;
+  render();
 }
 
-
 /********************
- 起動
+  起動
 ********************/
-
-renderQuestion();
+// 初回プレイ画面
+resetQuestion();
 
 </script>
-
 </body>
 </html>
